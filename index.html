@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PY//083 — 10-Day Spatial Memory Engine (Class 12 CBSE)</title>
+
+  <!-- Fonts: Instrument Serif (Editorial Display), Plus Jakarta Sans (UI), JetBrains Mono (Telemetry/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-carbon: #060709;
+      --bg-panel: #0b0d12;
+      --bg-surface: #10131a;
+      --bg-elevated: #161a24;
+      --line-hairline: #1d222d;
+      --line-bright: #2e3646;
+      --text-primary: #f2f4f8;
+      --text-secondary: #9ba3b4;
+      --text-dim: #586174;
+      --signal-orange: #ff5722;
+      --signal-orange-dim: rgba(255, 87, 34, 0.12);
+      --phosphor-mint: #00e599;
+      --phosphor-mint-dim: rgba(0, 229, 153, 0.12);
+      --laser-amber: #ffb020;
+      --crimson-alert: #ff3355;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-carbon);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      margin: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(255, 87, 34, 0.045), transparent 55%),
+        linear-gradient(to right, rgba(29, 34, 45, 0.28) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(29, 34, 45, 0.28) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
+    }
+
+    .font-editorial {
+      font-family: var(--font-serif);
+    }
+
+    code, pre, .font-mono-tech {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Architectural Crosshair Accents */
+    .crosshair-box {
+      position: relative;
+    }
+    .crosshair-box::before,
+    .crosshair-box::after {
+      content: "+";
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1;
+      color: var(--text-dim);
+      pointer-events: none;
+      z-index: 20;
+    }
+    .crosshair-box::before {
+      top: -6px;
+      left: -4px;
+    }
+    .crosshair-box::after {
+      bottom: -6px;
+      right: -4px;
+    }
+
+    /* Tactile Hardware Switch Micro-interaction */
+    .hw-btn {
+      transition: transform 90ms cubic-bezier(0.2, 0, 0, 1),
+                  border-color 150ms ease,
+                  background-color 150ms ease,
+                  color 150ms ease,
+                  box-shadow 150ms ease;
+    }
+    .hw-btn:active {
+      transform: translateY(1.5px) scale(0.99);
+    }
+
+    /* 3D Spatial Viewport & Multi-Plane Architecture */
+    .spatial-viewport {
+      perspective: 1400px;
+      transform-style: preserve-3d;
+    }
+
+    .stage-chassis {
+      background: linear-gradient(165deg, #11151e 0%, #090b0f 100%);
+      border: 1px solid var(--line-hairline);
+      transform-style: preserve-3d;
+      transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 250ms ease;
+      position: relative;
+      box-shadow: 
+        0 30px 70px -20px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .stage-chassis.iso-locked {
+      transform: rotateX(20deg) rotateY(-14deg) rotateZ(2deg) !important;
+    }
+
+    /* Isometric Floor Grid inside the 3D Stage */
+    .stage-grid-floor {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 24px 24px, 48px 48px, 48px 48px;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    /* Dynamic Specular Flashlight Sheen */
+    .stage-specular {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        600px circle at var(--cursor-x, 50%) var(--cursor-y, 35%),
+        rgba(255, 87, 34, 0.065),
+        transparent 60%
+      );
+      z-index: 1;
+    }
+
+    /* True 3D Z-Planes */
+    .z-plane-base {
+      transform: translateZ(0px);
+      transform-style: preserve-3d;
+      transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .z-plane-mid {
+      transform: translateZ(26px);
+      transform-style: preserve-3d;
+      transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .z-plane-high {
+      transform: translateZ(48px);
+      transform-style: preserve-3d;
+      transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .z-plane-levitate {
+      transform: translateZ(68px) translateY(-6px);
+      transform-style: preserve-3d;
+      transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 20px 32px -10px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Exploded Z-View Multiplier when toggled */
+    .exploded-mode .z-plane-mid {
+      transform: translateZ(48px) translateY(-4px);
+    }
+    .exploded-mode .z-plane-high {
+      transform: translateZ(88px) translateY(-10px);
+    }
+    .exploded-mode .z-plane-levitate {
+      transform: translateZ(115px) translateY(-16px);
+    }
+
+    /* SVG Signal Animations */
+    .svg-signal-dash {
+      stroke-dasharray: 6 6;
+      animation: signalMarch 1.1s linear infinite;
+    }
+
+    .svg-laser-arc {
+      stroke-dasharray: 450;
+      stroke-dashoffset: 450;
+      animation: laserDraw 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes signalMarch {
+      to { stroke-dashoffset: -24; }
+    }
+
+    @keyframes laserDraw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes scanlineSweep {
+      0%, 100% { transform: translateY(0px); opacity: 0.4; }
+      50% { transform: translateY(108px); opacity: 0.95; }
+    }
+
+    .optical-scanline {
+      animation: scanlineSweep 3.2s ease-in-out infinite;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-carbon);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--line-bright);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-[var(--signal-orange)] selection:text-black">
+
+  <!-- TOP ARCHITECTURAL TELEMETRY BAR -->
+  <header data-od-id="header" class="border-b border-[var(--line-hairline)] bg-[var(--bg-carbon)]/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 h-14 flex items-center justify-between gap-4">
+      
+      <!-- Brand / System Identifier -->
+      <div class="flex items-center gap-3.5">
+        <div class="flex items-center gap-2 px-2.5 py-1 bg-[var(--bg-surface)] border border-[var(--line-bright)]">
+          <span class="w-2 h-2 rounded-full bg-[var(--signal-orange)] animate-pulse"></span>
+          <span class="font-mono-tech text-xs font-semibold tracking-wider text-[var(--text-primary)]">PY//083</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 text-xs font-mono-tech text-[var(--text-secondary)]">
+          <span>CLASS 12 RECOVERY ENGINE</span>
+          <span class="text-[var(--text-dim)]">/</span>
+          <span class="text-[var(--text-dim)]">10-DAY SPRINT</span>
+        </div>
+      </div>
+
+      <!-- Right Telemetry Controls: Progress, Audio Toggle, View Matrix -->
+      <div class="flex items-center gap-3 sm:gap-5">
+        
+        <!-- Completion Gauge -->
+        <div class="flex items-center gap-3">
+          <div class="text-xs font-mono-tech text-[var(--text-secondary)]">
+            SYNC <span id="mastered-counter" class="text-[var(--phosphor-mint)] font-semibold">00</span><span class="text-[var(--text-dim)]">/10</span>
+          </div>
+          <div class="w-20 sm:w-28 h-2 bg-[var(--bg-surface)] border border-[var(--line-hairline)] p-0.5">
+            <div id="mastered-bar" class="h-full bg-[var(--phosphor-mint)] transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Tactile Sound Synthesizer Toggle -->
+        <button 
+          id="sfx-toggle-btn"
+          onclick="toggleSound()"
+          title="Toggle Hardware Click Synthesizer"
+          class="hw-btn hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-panel)] border border-[var(--line-hairline)] hover:border-[var(--line-bright)] text-[11px] font-mono-tech text-[var(--text-secondary)]"
+        >
+          <span id="sfx-indicator" class="w-1.5 h-1.5 rounded-full bg-[var(--phosphor-mint)]"></span>
+          <span id="sfx-label">SFX:ON</span>
+        </button>
+
+        <!-- Mode Switcher: 3D Stage vs Index Matrix -->
+        <button 
+          id="view-toggle-btn" 
+          onclick="toggleViewMode()"
+          class="hw-btn px-3 py-1 bg-[var(--bg-surface)] border border-[var(--line-bright)] hover:border-[var(--signal-orange)] text-xs font-mono-tech text-[var(--text-primary)] flex items-center gap-2"
+        >
+          <svg class="w-3.5 h-3.5 text-[var(--signal-orange)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span id="view-toggle-label">INDEX_MATRIX</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE CONTAINER -->
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-8 py-6 sm:py-9 flex-1 flex flex-col gap-7">
+
+    <!-- EDITORIAL HEADER & PRECISION DAY SCRUBBER -->
+    <section data-od-id="hero" class="flex flex-col gap-5">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-[var(--line-hairline)] pb-5">
+        <div>
+          <div class="flex items-center gap-2 text-[11px] font-mono-tech uppercase tracking-widest text-[var(--signal-orange)] mb-1.5">
+            <span>// ZERO-TO-BOARD ARCHITECTURE</span>
+            <span>•</span>
+            <span>2–3 HRS / DAY</span>
+          </div>
+          <h1 class="font-editorial text-4xl sm:text-5xl font-normal tracking-tight text-[var(--text-primary)] leading-none">
+            See how Python mutates memory in real time.
+          </h1>
+        </div>
+
+        <!-- Hardware Keybinding Legend -->
+        <div class="hidden md:flex items-center gap-3 text-[11px] font-mono-tech text-[var(--text-secondary)] bg-[var(--bg-panel)] px-3.5 py-2 border border-[var(--line-hairline)]">
+          <span>STEP_DAY:</span>
+          <kbd class="px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--line-bright)] text-[var(--text-primary)]">←</kbd>
+          <kbd class="px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--line-bright)] text-[var(--text-primary)]">→</kbd>
+          <span class="text-[var(--text-dim)]">|</span>
+          <span>COMMIT_DONE:</span>
+          <kbd class="px-1.5 py-0.5 bg-[var(--bg-surface)] border border-[var(--line-bright)] text-[var(--text-primary)]">SPACE</kbd>
+        </div>
+      </div>
+
+      <!-- 10-Day Hardware Sequencer Strip -->
+      <nav data-od-id="day-selector" aria-label="10 Day Sequencer" class="w-full overflow-x-auto pb-1">
+        <div id="day-pill-container" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 min-w-[540px]">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </nav>
+    </section>
+
+    <!-- PRIMARY VIEW: SPATIAL SPLIT WORKSPACE (Dossier Left + 3D Hardware Stage Right) -->
+    <section id="interactive-stage-view" data-od-id="stage" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+      <!-- LEFT COLUMN: Technical Dossier & Spec Sheet (5 Columns) -->
+      <div class="lg:col-span-5 crosshair-box bg-[var(--bg-panel)] border border-[var(--line-hairline)] p-6 sm:p-7 flex flex-col justify-between gap-6">
+        
+        <div class="flex flex-col gap-5">
+          <!-- Module Index & Commit Status Button -->
+          <div class="flex items-center justify-between gap-3 border-b border-[var(--line-hairline)] pb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-[var(--signal-orange)]"></span>
+              <span id="brief-day-tag" class="font-mono-tech text-xs uppercase tracking-widest text-[var(--text-primary)] font-semibold">
+                MODULE 01 // 10
+              </span>
+            </div>
+
+            <button 
+              id="complete-day-btn" 
+              onclick="toggleCurrentDayComplete()"
+              class="hw-btn px-3 py-1.5 border border-[var(--line-bright)] bg-[var(--bg-surface)] text-xs font-mono-tech text-[var(--text-primary)] flex items-center gap-2"
+            >
+              <!-- Updated by JS -->
+            </button>
+          </div>
+
+          <!-- Editorial Day Heading & Plain-English Thesis -->
+          <div>
+            <h2 id="brief-title" class="font-editorial text-3xl sm:text-4xl font-normal text-[var(--text-primary)] tracking-tight leading-tight mb-2.5">
+              Variables, Data Types & Operators
+            </h2>
+            <p id="brief-summary" class="text-sm text-[var(--text-secondary)] leading-relaxed">
+              Master how Python allocates numbers and text, and why true division behaves differently from floor division in memory.
+            </p>
+          </div>
+
+          <!-- Indexed Core Concepts Grid -->
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between text-[11px] font-mono-tech uppercase tracking-wider text-[var(--text-dim)]">
+              <span>SPEC // CORE SYLLABUS VECTORS</span>
+              <span>CBSE_083</span>
+            </div>
+            <div id="brief-concepts" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Daily Practical Output / Lab Challenge -->
+          <div class="p-4 bg-[var(--bg-carbon)] border border-[var(--line-hairline)] flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono-tech uppercase tracking-wider text-[var(--phosphor-mint)] flex items-center gap-2">
+                <span>&gt;_ LAB_VERIFICATION_TASK</span>
+              </span>
+              <button 
+                onclick="toggleCodeDrawer()" 
+                class="hw-btn text-xs font-mono-tech text-[var(--text-secondary)] hover:text-[var(--signal-orange)] underline underline-offset-4"
+                id="code-drawer-btn"
+              >
+                [INSPECT_SOURCE]
+              </button>
+            </div>
+            <p id="brief-challenge" class="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+              Write a small script that takes marks in 5 subjects, calculates percentage, and determines pass/fail status.
+            </p>
+
+            <!-- Collapsible Reference Solution Terminal -->
+            <div id="code-drawer" class="hidden pt-3 border-t border-[var(--line-hairline)]">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-mono-tech uppercase text-[var(--text-dim)]">REFERENCE_SOLUTION.PY</span>
+                <button onclick="copySolutionCode()" class="hw-btn text-[11px] font-mono-tech text-[var(--signal-orange)] flex items-center gap-1">
+                  <span id="copy-label">[COPY_BUFFER]</span>
+                </button>
+              </div>
+              <pre id="brief-code" class="text-xs font-mono-tech text-[var(--text-primary)] bg-[var(--bg-panel)] p-3.5 border border-[var(--line-hairline)] overflow-x-auto leading-relaxed"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Board Exam Trap Stencil Callout -->
+        <div class="p-3.5 bg-[var(--signal-orange-dim)] border-l-2 border-[var(--signal-orange)] flex items-start gap-3">
+          <span class="font-mono-tech text-xs font-semibold text-[var(--signal-orange)] shrink-0 mt-0.5">[TRAP]</span>
+          <p id="brief-trap" class="text-xs font-mono-tech text-[var(--text-primary)] leading-relaxed">
+            Board Trap: 10 / 2 always returns 5.0 (float), and -7 // 2 rounds down towards negative infinity to -4, not -3.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: 3D Spatial Memory & Vector Telemetry Stage (7 Columns) -->
+      <div class="lg:col-span-7 spatial-viewport w-full flex flex-col">
+        <div 
+          id="stage-3d-container" 
+          class="stage-chassis crosshair-box p-5 sm:p-7 flex-1 min-h-[510px] flex flex-col justify-between select-none"
+        >
+          <!-- Precision Background Grid & Specular Spotlight -->
+          <div class="stage-grid-floor"></div>
+          <div class="stage-specular"></div>
+
+          <!-- Stage Top HUD: Telemetry & 3D Camera Controls -->
+          <div class="z-plane-mid flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line-hairline)] pb-3.5 z-10">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2 h-2 rounded-full bg-[var(--phosphor-mint)]"></span>
+              <span id="stage-caption" class="text-xs font-mono-tech uppercase tracking-wider text-[var(--text-primary)] font-semibold">
+                3D OPERATOR PIPELINE: / VS // VS %
+              </span>
+            </div>
+
+            <!-- Live 3D Telemetry Readout + Camera Mode Buttons -->
+            <div class="flex items-center gap-2">
+              <span id="telemetry-readout" class="hidden sm:inline-block text-[10px] font-mono-tech text-[var(--text-dim)] mr-1">
+                X:0.0° Y:0.0°
+              </span>
+              <button 
+                id="iso-toggle-btn"
+                onclick="toggleIsoCamera()"
+                class="hw-btn px-2 py-1 bg-[var(--bg-carbon)] border border-[var(--line-hairline)] hover:border-[var(--line-bright)] text-[10px] font-mono-tech text-[var(--text-secondary)]"
+              >
+                CAM:FREE
+              </button>
+              <button 
+                id="explode-toggle-btn"
+                onclick="toggleExplodeZ()"
+                class="hw-btn px-2 py-1 bg-[var(--bg-carbon)] border border-[var(--line-hairline)] hover:border-[var(--line-bright)] text-[10px] font-mono-tech text-[var(--text-secondary)]"
+              >
+                Z_DEPTH:1X
+              </button>
+            </div>
+          </div>
+
+          <!-- Centerpiece 3D + SVG Dynamic Canvas -->
+          <div id="stage-visual-mount" class="z-plane-high my-auto py-6 flex flex-col items-center justify-center w-full z-10">
+            <!-- Dynamically populated per day with multi-plane 3D + animated SVG schematics -->
+          </div>
+
+          <!-- Stage Interactive Controls Footer HUD -->
+          <div class="z-plane-mid pt-4 border-t border-[var(--line-hairline)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 z-10">
+            <div id="stage-controls-mount" class="flex flex-wrap items-center gap-2">
+              <!-- Dynamically populated per day -->
+            </div>
+            <div class="text-[10px] font-mono-tech text-[var(--text-dim)] uppercase tracking-wider shrink-0">
+              RUNTIME // PY_3.12_MEM
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECONDARY VIEW: FULL 10-DAY INDEX MATRIX + 3 GOLDEN DIRECTIVES -->
+    <section id="overview-grid-view" data-od-id="roadmap-cards" class="hidden flex-col gap-10">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="all-days-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- 3 Golden Rules to Make This Stick -->
+      <div class="border-t border-[var(--line-hairline)] pt-8">
+        <div class="flex items-center gap-2 text-xs font-mono-tech text-[var(--signal-orange)] uppercase tracking-widest mb-2">
+          <span>// CBSE BOARD DIRECTIVES</span>
+        </div>
+        <h2 class="font-editorial text-3xl font-normal text-[var(--text-primary)] mb-6">
+          Three non-negotiable protocols for Section B & C.
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="crosshair-box p-5 bg-[var(--bg-panel)] border border-[var(--line-hairline)] flex flex-col gap-2.5">
+            <div class="font-mono-tech text-xs text-[var(--signal-orange)]">PROTOCOL // 01</div>
+            <div class="text-base font-semibold text-[var(--text-primary)]">Return vs. Print Separation</div>
+            <p class="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Board questions specify: "Write a function that accepts X and returns Y." Never embed <code class="text-[var(--text-primary)]">input()</code> or <code class="text-[var(--text-primary)]">print()</code> inside core functions unless explicitly instructed.
+            </p>
+          </div>
+          <div class="crosshair-box p-5 bg-[var(--bg-panel)] border border-[var(--line-hairline)] flex flex-col gap-2.5">
+            <div class="font-mono-tech text-xs text-[var(--phosphor-mint)]">PROTOCOL // 02</div>
+            <div class="text-base font-semibold text-[var(--text-primary)]">Dry-Run Trace Tables First</div>
+            <p class="text-xs text-[var(--text-secondary)] leading-relaxed">
+              For loop and string slicing output questions, draw a step-by-step variable trace table on paper before writing the final output. Section B heavily targets off-by-one boundary traps.
+            </p>
+          </div>
+          <div class="crosshair-box p-5 bg-[var(--bg-panel)] border border-[var(--line-hairline)] flex flex-col gap-2.5">
+            <div class="font-mono-tech text-xs text-[var(--laser-amber)]">PROTOCOL // 03</div>
+            <div class="text-base font-semibold text-[var(--text-primary)]">Standard Library Discipline</div>
+            <p class="text-xs text-[var(--text-secondary)] leading-relaxed">
+              Skip external libraries or complex class hierarchies. Master standard string/list/dict methods, text modes, <code class="text-[var(--text-primary)]">pickle</code> serialization, and list-backed LIFO stacks.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MINIMAL ARCHITECTURAL FOOTER -->
+  <footer data-od-id="footer" class="border-t border-[var(--line-hairline)] bg-[var(--bg-carbon)] py-5 mt-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono-tech text-[var(--text-dim)]">
+      <span>SYS // 10-DAY CLASS 12 PYTHON RECOVERY ARCHIVE • LOCAL_STORAGE SYNCED</span>
+      <div class="flex items-center gap-4 text-[var(--text-secondary)]">
+        <button onclick="prevDay()" class="hw-btn hover:text-[var(--signal-orange)]">← PREV_MODULE</button>
+        <span class="text-[var(--line-bright)]">|</span>
+        <button onclick="nextDay()" class="hw-btn hover:text-[var(--signal-orange)]">NEXT_MODULE →</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- APPLICATION ENGINE & 10 BESPOKE 3D/SVG HARDWARE VISUALIZERS -->
+  <script>
+    // Complete 10-Day Curriculum Dataset
+    const ROADMAP_DATA = [
+      {
+        day: 1,
+        title: "Variables, Data Types & Operators",
+        summary: "Understand core types, type casting, and how true division (/), floor division (//), and modulus (%) split numbers in memory.",
+        concepts: ["int, float, str, bool", "Type casting int(), str()", "/ vs // (Floor Division)", "Modulus (%)", "Operator Precedence"],
+        challenge: "Write a small script that takes marks in 5 subjects, calculates percentage, and determines pass/fail status.",
+        trap: "Board Trap: 10 / 2 always returns 5.0 (float), and -7 // 2 floors down towards negative infinity to -4 (not -3).",
+        caption: "3D ALU PIPELINE // TRUE (/) VS FLOOR (//) VS MOD (%)",
+        code: `# Day 1: 5-Subject Percentage & Status
+marks = [78, 85, 64, 91, 72]
+total = sum(marks)
+percentage = total / 5  # '/' always yields float
+
+status = "PASS" if percentage >= 33.0 else "FAIL"
+print("Percentage:", percentage, "| Status:", status)`
+      },
+      {
+        day: 2,
+        title: "Conditionals & range() Basics",
+        summary: "Control execution branches with if/elif/else and visualize how range(start, stop, step) hops across numbers without touching stop.",
+        concepts: ["if, elif, else", "Nested conditions", "and, or, not", "range(start, stop, step)"],
+        challenge: "Solve: Check if a given year is a leap year; print all odd numbers between 1 and 50 using range().",
+        trap: "Board Trap: In range(start, stop, step), the stop value is strictly excluded. range(1, 10, 2) stops at 9.",
+        caption: "3D STEP SEQUENCER // RANGE(START, STOP, STEP)",
+        code: `# Day 2: Leap Year & Odd Numbers via range()
+year = 2024
+is_leap = (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+print(year, "Leap Year:", is_leap)
+
+odd_nums = list(range(1, 50, 2))
+print("Odd numbers (1 to 50):", odd_nums[:8], "...")`
+      },
+      {
+        day: 3,
+        title: "Loops & Iteration Control",
+        summary: "Master for and while loops, dry-running nested loops on paper, and redirecting flow with break and continue.",
+        concepts: ["for loops (sequences)", "while loops", "break statement", "continue statement", "Dry-running nested loops"],
+        challenge: "Print a simple number triangle pattern; write a script to check if a number is prime.",
+        trap: "Board Trap: 'continue' jumps straight to the next iteration, while 'break' aborts the loop and skips any loop 'else' block.",
+        caption: "ORBITAL CYCLOTRON // ITERATION, CONTINUE & BREAK",
+        code: `# Day 3: Prime Check & Number Triangle
+n = 29
+for i in range(2, int(n ** 0.5) + 1):
+    if n % i == 0:
+        print(n, "is Composite")
+        break
+else:
+    print(n, "is Prime")
+
+for row in range(1, 5):
+    for col in range(1, row + 1):
+        print(col, end=" ")
+    print()`
+      },
+      {
+        day: 4,
+        title: "Strings & Slicing",
+        summary: "Navigate dual positive and negative index tracks, extract substrings with [start:stop:step], and apply built-in string methods.",
+        concepts: ["Positive & negative indexing", "Slicing [start:stop:step]", "Reversal [::-1]", ".upper(), .lower(), .isdigit()", ".split() & .join()"],
+        challenge: "Write a function to check if a word/sentence is a palindrome; count vowels and consonants in a string.",
+        trap: "Board Trap: Strings are immutable (s[0] = 'A' raises TypeError), but slicing out of bounds like s[2:100] safely returns a substring.",
+        caption: "3D MEMORY RIBBON // DUAL-INDEX STRING SLICING",
+        code: `# Day 4: Palindrome & Vowel Counter
+def analyze_text(s):
+    clean = s.lower()
+    is_palin = (clean == clean[::-1])
+    vowels = sum(1 for ch in clean if ch in "aeiou")
+    consonants = sum(1 for ch in clean if ch.isalpha() and ch not in "aeiou")
+    return is_palin, vowels, consonants
+
+print(analyze_text("Madam"))`
+      },
+      {
+        day: 5,
+        title: "Lists & Tuples (Mutability)",
+        summary: "See why lists mutate in-place through memory references while tuples stay locked, plus essential list methods.",
+        concepts: ["append(), insert(), pop(), remove()", "Nested indexing", "Mutable Lists vs Immutable Tuples", "Tuple packing/unpacking"],
+        challenge: "Take a list of numbers: separate them into two lists of even and odd numbers, then calculate the sum of each.",
+        trap: "Board Trap: Assigning b = a does NOT copy a list; both variables point to the exact same list in memory. Use b = a.copy().",
+        caption: "HEAP POINTER TOPOLOGY // ALIASING VS .COPY()",
+        code: `# Day 5: Even/Odd Split & Sum
+nums = [12, 7, 19, 24, 6, 11]
+evens, odds = [], []
+
+for x in nums:
+    if x % 2 == 0:
+        evens.append(x)
+    else:
+        odds.append(x)
+
+print("Evens:", evens, "Sum:", sum(evens))
+print("Odds:", odds, "Sum:", sum(odds))`
+      },
+      {
+        day: 6,
+        title: "Dictionaries & Key-Value Logic",
+        summary: "Map unique immutable keys to values, safely query with .get(), and build frequency counters in a single pass.",
+        concepts: ["Creating dicts {}", "Safe access with .get()", "Updating key-values", ".items(), .keys(), .values()"],
+        challenge: "Build a frequency counter: take a string and count how many times each character appears using a dictionary.",
+        trap: "Board Trap: Accessing a missing key with d[k] raises KeyError, whereas d.get(k, 0) safely returns the default value 0.",
+        caption: "HASH BUCKET ROUTER // KEY-VALUE FREQUENCY MAP",
+        code: `# Day 6: Character Frequency Counter
+def char_frequency(text):
+    freq = {}
+    for ch in text.upper():
+        if ch != " ":
+            freq[ch] = freq.get(ch, 0) + 1
+    return freq
+
+print(char_frequency("DURGA PUJA"))`
+      },
+      {
+        day: 7,
+        title: "Functions & Variable Scope",
+        summary: "Separate local function workspaces from global memory, pass default parameters, and return computed values cleanly.",
+        concepts: ["def & function calls", "return vs print()", "Positional & default args", "global keyword & LEGB scope"],
+        challenge: "Write separate functions: calc_area(), is_even(), and trace the output of a tricky variable scope snippet.",
+        trap: "Board Trap: Default parameters must always come AFTER positional parameters: def fn(a, b=10) is valid; def fn(a=10, b) is a SyntaxError.",
+        caption: "3D STACK FRAMES // GLOBAL VS LOCAL LEGB SCOPE",
+        code: `# Day 7: Functions & Global Scope Trace
+bonus = 5
+
+def calc_area(length, width=10):
+    return length * width
+
+def add_Score(points):
+    global bonus
+    bonus += 5
+    return points + bonus
+
+print("Area:", calc_area(12))
+print("Score:", add_Score(80), "| Global bonus:", bonus)`
+      },
+      {
+        day: 8,
+        title: "Text File Handling",
+        summary: "Stream data from .txt files using read(), readline(), and readlines(), and manage file pointers safely with 'with open()'.",
+        concepts: ["Modes: 'r', 'w', 'a'", "open() & with context manager", ".read() vs .readline()", ".readlines() list of strings"],
+        challenge: "Create a program that reads a .txt file and counts how many lines start with the letter 'A' or 'The'.",
+        trap: "Board Trap: .read() returns one string, .readline() returns one line string, and .readlines() returns a LIST of strings.",
+        caption: "OPTICAL BUFFER SCANNER // READ() VS READLINE() VS READLINES()",
+        code: `# Day 8: Count Lines Starting with 'A' or 'The'
+def count_target_lines(filename):
+    count = 0
+    with open(filename, "r") as f:
+        for line in f:
+            clean = line.strip()
+            if clean.startswith("The") or clean.startswith("A"):
+                count += 1
+    return count`
+      },
+      {
+        day: 9,
+        title: "Binary File Handling (pickle)",
+        summary: "Serialize structured Python lists/dicts directly into binary .dat files with pickle.dump() and unpack until EOFError.",
+        concepts: ["import pickle", "pickle.dump() (write)", "pickle.load() (read)", "EOFError with try...except"],
+        challenge: "Write a menu-driven script: insert student records [roll_no, name, marks] into a .dat file, and search by roll number.",
+        trap: "Board Trap: Always open pickle files in binary mode ('wb', 'rb', 'ab') and wrap the pickle.load() while-loop inside try...except EOFError.",
+        caption: "BYTE SERIALIZATION CHAMBER // PICKLE.DUMP() & EOF SHIELD",
+        code: `# Day 9: Binary Record Write & Search
+import pickle
+
+def save_student(roll, name, marks):
+    with open("students.dat", "ab") as f:
+        pickle.dump([roll, name, marks], f)
+
+def search_student(target_roll):
+    try:
+        with open("students.dat", "rb") as f:
+            while True:
+                rec = pickle.load(f)
+                if rec[0] == target_roll:
+                    return rec
+    except EOFError:
+        return None`
+      },
+      {
+        day: 10,
+        title: "Linear Data Structures: Stacks",
+        summary: "Build a Last-In-First-Out (LIFO) Stack using a Python list with .append() for Push, .pop() for Pop, and Underflow checks.",
+        concepts: ["LIFO Principle", "Push via stack.append()", "Pop via stack.pop()", "Empty Stack Underflow check"],
+        challenge: "Implement a complete push/pop stack program (e.g., push book titles or customer IDs, display stack, pop items).",
+        trap: "Board Trap: Never call stack.pop() without first checking 'if len(stack) == 0:'; missing the Underflow check loses 1 mark in Boards.",
+        caption: "3D ISOMETRIC LIFO TOWER // PUSH(), POP() & UNDERFLOW",
+        code: `# Day 10: Complete CBSE Stack Implementation
+stack = []
+
+def push_book(stk, book):
+    stk.append(book)
+
+def pop_book(stk):
+    if len(stk) == 0:
+        return "UNDERFLOW"
+    return stk.pop()
+
+push_book(stack, "NCERT CS")
+push_book(stack, "Python Core")
+print("Popped:", pop_book(stack))`
+      }
+    ];
+
+    // Core Application State
+    let currentDay = 1;
+    let completedDays = JSON.parse(localStorage.getItem('puja_py12_done') || '[]');
+    let isOverviewMode = false;
+    let isoLocked = false;
+    let explodedZ = false;
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    // Interactive State for all 10 3D/SVG Simulators
+    const simState = {
+      d1: { numA: -7, numB: 2 },
+      d2: { start: 1, stop: 10, step: 2 },
+      d3: { iter: 0, status: "ORBITING", skipped: [], brokenAt: null },
+      d4: { label: "[1:7:2]", indices: [1, 3, 5] },
+      d5: { mode: "alias", mutated: false },
+      d6: { word: "PUJA", counts: { P: 1, U: 1, J: 1, A: 1 } },
+      d7: { mode: "shadow" },
+      d8: { method: "readline" },
+      d9: { phase: "dump" },
+      d10: { stack: ["0x01: NCERT_CS", "0x02: PY_CORE", "0x03: SQL_LAB"], underflow: false }
+    };
+
+    // Subtle WebAudio Hardware Switch Click Synthesizer
+    function playTick(freq = 920, duration = 0.018) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const ind = document.getElementById('sfx-indicator');
+      const lbl = document.getElementById('sfx-label');
+      if (soundEnabled) {
+        ind.className = "w-1.5 h-1.5 rounded-full bg-[var(--phosphor-mint)]";
+        lbl.textContent = "SFX:ON";
+        playTick(1100, 0.02);
+      } else {
+        ind.className = "w-1.5 h-1.5 rounded-full bg-[var(--text-dim)]";
+        lbl.textContent = "SFX:OFF";
+      }
+    }
+
+    function toggleIsoCamera() {
+      playTick(780, 0.025);
+      isoLocked = !isoLocked;
+      const card = document.getElementById('stage-3d-container');
+      const btn = document.getElementById('iso-toggle-btn');
+      if (isoLocked) {
+        card.classList.add('iso-locked');
+        btn.textContent = "CAM:ISO_3D";
+        btn.classList.add('text-[var(--signal-orange)]', 'border-[var(--signal-orange)]');
+        document.getElementById('telemetry-readout').textContent = "X:20.0° Y:-14.0°";
+      } else {
+        card.classList.remove('iso-locked');
+        card.style.transform = `rotateX(0deg) rotateY(0deg)`;
+        btn.textContent = "CAM:FREE";
+        btn.classList.remove('text-[var(--signal-orange)]', 'border-[var(--signal-orange)]');
+        document.getElementById('telemetry-readout').textContent = "X:0.0° Y:0.0°";
+      }
+    }
+
+    function toggleExplodeZ() {
+      playTick(1050, 0.025);
+      explodedZ = !explodedZ;
+      const card = document.getElementById('stage-3d-container');
+      const btn = document.getElementById('explode-toggle-btn');
+      if (explodedZ) {
+        card.classList.add('exploded-mode');
+        btn.textContent = "Z_DEPTH:2.4X";
+        btn.classList.add('text-[var(--phosphor-mint)]', 'border-[var(--phosphor-mint)]');
+      } else {
+        card.classList.remove('exploded-mode');
+        btn.textContent = "Z_DEPTH:1X";
+        btn.classList.remove('text-[var(--phosphor-mint)]', 'border-[var(--phosphor-mint)]');
+      }
+    }
+
+    // Initialize Application
+    function init() {
+      renderDayPills();
+      renderCurrentDay();
+      renderOverviewGrid();
+      updateProgressUI();
+      setup3DTiltPhysics();
+      setupKeyboardShortcuts();
+    }
+
+    // Precision 3D Perspective Tilt & Specular Flashlight Tracking
+    function setup3DTiltPhysics() {
+      const card = document.getElementById('stage-3d-container');
+      const readout = document.getElementById('telemetry-readout');
+      if (!card) return;
+
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--cursor-x', `${x}px`);
+        card.style.setProperty('--cursor-y', `${y}px`);
+
+        if (isoLocked) return;
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -6.5;
+        const rotateY = ((x - centerX) / centerX) * 7.5;
+
+        card.style.transform = `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+        if (readout) {
+          readout.textContent = `X:${rotateX.toFixed(1)}° Y:${rotateY.toFixed(1)}°`;
+        }
+      });
+
+      card.addEventListener('mouseleave', () => {
+        if (isoLocked) return;
+        card.style.transform = `rotateX(0deg) rotateY(0deg)`;
+        if (readout) readout.textContent = `X:0.0° Y:0.0°`;
+      });
+    }
+
+    function setupKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          nextDay();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          prevDay();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          toggleCurrentDayComplete();
+        }
+      });
+    }
+
+    function selectDay(dayNum) {
+      playTick(880, 0.015);
+      currentDay = dayNum;
+      if (isOverviewMode) toggleViewMode();
+      renderDayPills();
+      renderCurrentDay();
+    }
+
+    function prevDay() {
+      selectDay(currentDay > 1 ? currentDay - 1 : 10);
+    }
+
+    function nextDay() {
+      selectDay(currentDay < 10 ? currentDay + 1 : 1);
+    }
+
+    function toggleCurrentDayComplete() {
+      playTick(1200, 0.03);
+      if (completedDays.includes(currentDay)) {
+        completedDays = completedDays.filter(d => d !== currentDay);
+      } else {
+        completedDays.push(currentDay);
+      }
+      localStorage.setItem('puja_py12_done', JSON.stringify(completedDays));
+      renderDayPills();
+      renderCurrentDay();
+      renderOverviewGrid();
+      updateProgressUI();
+    }
+
+    function updateProgressUI() {
+      const countEl = document.getElementById('mastered-counter');
+      const barEl = document.getElementById('mastered-bar');
+      const len = completedDays.length;
+      countEl.textContent = len < 10 ? `0${len}` : `${len}`;
+      barEl.style.width = `${(len / 10) * 100}%`;
+    }
+
+    function toggleViewMode() {
+      playTick(740, 0.02);
+      isOverviewMode = !isOverviewMode;
+      const stageView = document.getElementById('interactive-stage-view');
+      const overviewView = document.getElementById('overview-grid-view');
+      const label = document.getElementById('view-toggle-label');
+
+      if (isOverviewMode) {
+        stageView.classList.add('hidden');
+        overviewView.classList.remove('hidden');
+        overviewView.classList.add('flex');
+        label.textContent = "STAGE_3D_VIEW";
+      } else {
+        overviewView.classList.add('hidden');
+        overviewView.classList.remove('flex');
+        stageView.classList.remove('hidden');
+        label.textContent = "INDEX_MATRIX";
+      }
+    }
+
+    function toggleCodeDrawer() {
+      playTick(820, 0.018);
+      const drawer = document.getElementById('code-drawer');
+      const btn = document.getElementById('code-drawer-btn');
+      const isHidden = drawer.classList.contains('hidden');
+      if (isHidden) {
+        drawer.classList.remove('hidden');
+        btn.textContent = "[HIDE_SOURCE]";
+      } else {
+        drawer.classList.add('hidden');
+        btn.textContent = "[INSPECT_SOURCE]";
+      }
+    }
+
+    function copySolutionCode() {
+      playTick(1300, 0.02);
+      const code = ROADMAP_DATA[currentDay - 1].code;
+      navigator.clipboard?.writeText(code);
+      const label = document.getElementById('copy-label');
+      label.textContent = "[COPIED_OK]";
+      setTimeout(() => { label.textContent = "[COPY_BUFFER]"; }, 1400);
+    }
+
+    // Render 10-Day Hardware Sequencer Strip
+    function renderDayPills() {
+      const container = document.getElementById('day-pill-container');
+      container.innerHTML = ROADMAP_DATA.map(item => {
+        const isCurrent = item.day === currentDay;
+        const isDone = completedDays.includes(item.day);
+        const dayStr = item.day < 10 ? `0${item.day}` : `${item.day}`;
+
+        return `
+          <button
+            onclick="selectDay(${item.day})"
+            class="hw-btn px-2.5 py-2 border text-left font-mono-tech transition-all flex flex-col justify-between gap-1 ${
+              isCurrent
+                ? 'bg-[var(--bg-elevated)] border-[var(--signal-orange)] text-[var(--text-primary)] shadow-[inset_0_2px_0_0_var(--signal-orange)]'
+                : 'bg-[var(--bg-panel)] border-[var(--line-hairline)] text-[var(--text-secondary)] hover:border-[var(--line-bright)] hover:text-[var(--text-primary)]'
+            }"
+          >
+            <div class="flex items-center justify-between w-full">
+              <span class="text-[10px] ${isCurrent ? 'text-[var(--signal-orange)] font-semibold' : 'text-[var(--text-dim)]'}">D//${dayStr}</span>
+              <span class="w-1.5 h-1.5 rounded-full ${isDone ? 'bg-[var(--phosphor-mint)]' : (isCurrent ? 'bg-[var(--signal-orange)]' : 'bg-[var(--line-bright)]')}"></span>
+            </div>
+            <span class="text-[11px] truncate w-full font-medium">${item.title.split(' ')[0].replace(',', '')}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Render Left Dossier & Right 3D Stage
+    function renderCurrentDay() {
+      const item = ROADMAP_DATA[currentDay - 1];
+      const dayStr = item.day < 10 ? `0${item.day}` : `${item.day}`;
+      const isDone = completedDays.includes(item.day);
+
+      document.getElementById('brief-day-tag').textContent = `MODULE ${dayStr} // 10`;
+      document.getElementById('brief-title').textContent = item.title;
+      document.getElementById('brief-summary').textContent = item.summary;
+      document.getElementById('brief-challenge').textContent = item.challenge;
+      document.getElementById('brief-trap').textContent = item.trap;
+      document.getElementById('brief-code').textContent = item.code;
+      document.getElementById('stage-caption').textContent = item.caption;
+
+      // Indexed Concept Specs
+      document.getElementById('brief-concepts').innerHTML = item.concepts.map((c, idx) => `
+        <div class="px-2.5 py-1.5 bg-[var(--bg-surface)] border border-[var(--line-hairline)] text-xs font-mono-tech text-[var(--text-primary)] flex items-center gap-2">
+          <span class="text-[10px] text-[var(--text-dim)]">0${idx + 1}</span>
+          <span class="truncate">${c}</span>
+        </div>
+      `).join('');
+
+      // Commit Status Button
+      const completeBtn = document.getElementById('complete-day-btn');
+      if (isDone) {
+        completeBtn.className = "hw-btn px-3 py-1.5 border border-[var(--phosphor-mint)] bg-[var(--phosphor-mint-dim)] text-xs font-mono-tech text-[var(--phosphor-mint)] flex items-center gap-1.5";
+        completeBtn.innerHTML = `<span>[✓ VERIFIED]</span>`;
+      } else {
+        completeBtn.className = "hw-btn px-3 py-1.5 border border-[var(--line-bright)] bg-[var(--bg-surface)] hover:border-[var(--signal-orange)] text-xs font-mono-tech text-[var(--text-primary)] flex items-center gap-1.5";
+        completeBtn.innerHTML = `<span>[COMMIT_DONE]</span>`;
+      }
+
+      render3DStageForDay(item.day);
+    }
+
+    // Render Full 10-Day Index Matrix
+    function renderOverviewGrid() {
+      const grid = document.getElementById('all-days-grid');
+      grid.innerHTML = ROADMAP_DATA.map(item => {
+        const isDone = completedDays.includes(item.day);
+        const dayStr = item.day < 10 ? `0${item.day}` : `${item.day}`;
+        return `
+          <div 
+            onclick="selectDay(${item.day})"
+            class="crosshair-box cursor-pointer p-6 bg-[var(--bg-panel)] border border-[var(--line-hairline)] hover:border-[var(--signal-orange)] transition-all flex flex-col justify-between gap-4"
+          >
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between border-b border-[var(--line-hairline)] pb-2.5">
+                <span class="font-mono-tech text-xs text-[var(--signal-orange)]">MODULE // ${dayStr}</span>
+                ${isDone 
+                  ? `<span class="text-xs font-mono-tech text-[var(--phosphor-mint)]">[✓ VERIFIED]</span>` 
+                  : `<span class="text-xs font-mono-tech text-[var(--text-dim)]">LAUNCH_STAGE →</span>`}
+              </div>
+              <h3 class="font-editorial text-2xl text-[var(--text-primary)] mt-1">${item.title}</h3>
+              <p class="text-xs text-[var(--text-secondary)] leading-relaxed">${item.challenge}</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 pt-2 border-t border-[var(--line-hairline)]">
+              ${item.concepts.map(c => `<span class="text-[11px] font-mono-tech px-2 py-0.5 bg-[var(--bg-carbon)] border border-[var(--line-hairline)] text-[var(--text-secondary)]">${c}</span>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================================================
+    // 10 BESPOKE 3D PERSPECTIVE & ANIMATED SVG VISUALIZERS
+    // ============================================================================
+    function render3DStageForDay(day) {
+      const visualMount = document.getElementById('stage-visual-mount');
+      const controlsMount = document.getElementById('stage-controls-mount');
+
+      if (day === 1) {
+        // DAY 1: 3D ALU Operator Pipeline with Animated SVG Signal Packets
+        const { numA, numB } = simState.d1;
+        const trueDiv = (numA / numB).toFixed(2);
+        const floorDiv = Math.floor(numA / numB);
+        const modVal = ((numA % numB) + numB) % numB;
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-xl flex flex-col items-center spatial-viewport">
+            <svg class="w-full h-64 overflow-visible z-plane-mid" viewBox="0 0 540 240" fill="none">
+              <defs>
+                <path id="bus-top" d="M 130 120 C 195 120, 205 42, 285 42" />
+                <path id="bus-mid" d="M 130 120 L 285 120" />
+                <path id="bus-bot" d="M 130 120 C 195 120, 205 198, 285 198" />
+              </defs>
+
+              <!-- Base Bus Tracks -->
+              <use href="#bus-top" stroke="var(--line-bright)" stroke-width="2" />
+              <use href="#bus-mid" stroke="var(--line-bright)" stroke-width="2" />
+              <use href="#bus-bot" stroke="var(--line-bright)" stroke-width="2" />
+
+              <!-- Animated Signal Traces -->
+              <use href="#bus-top" stroke="var(--text-primary)" stroke-width="2" class="svg-signal-dash" />
+              <use href="#bus-mid" stroke="var(--signal-orange)" stroke-width="2.2" class="svg-signal-dash" />
+              <use href="#bus-bot" stroke="var(--phosphor-mint)" stroke-width="2" class="svg-signal-dash" />
+
+              <!-- Live Moving Data Packets -->
+              <circle r="3.5" fill="var(--text-primary)">
+                <animateMotion dur="1.6s" repeatCount="indefinite"><mpath href="#bus-top"/></animateMotion>
+              </circle>
+              <circle r="4" fill="var(--signal-orange)">
+                <animateMotion dur="1.3s" repeatCount="indefinite"><mpath href="#bus-mid"/></animateMotion>
+              </circle>
+              <circle r="3.5" fill="var(--phosphor-mint)">
+                <animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#bus-bot"/></animateMotion>
+              </circle>
+
+              <!-- Input Register Block -->
+              <g transform="translate(12, 84)">
+                <rect width="118" height="72" fill="var(--bg-carbon)" stroke="var(--line-bright)" stroke-width="1.8"/>
+                <line x1="0" y1="22" x2="118" y2="22" stroke="var(--line-hairline)" />
+                <text x="10" y="15" fill="var(--text-dim)" font-size="9" class="font-mono-tech">REG_IN // 0x01</text>
+                <text x="59" y="52" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="600" class="font-mono-tech">${numA}, ${numB}</text>
+              </g>
+
+              <!-- Output 1: True Division (/) -->
+              <g transform="translate(285, 10)">
+                <rect width="235" height="64" fill="var(--bg-carbon)" stroke="var(--line-bright)" stroke-width="1.6"/>
+                <text x="14" y="22" fill="var(--text-secondary)" font-size="10" class="font-mono-tech">OP_TRUE_DIV: ${numA} / ${numB}</text>
+                <text x="14" y="47" fill="var(--text-primary)" font-size="17" font-weight="600" class="font-mono-tech">${trueDiv}</text>
+                <rect x="172" y="31" width="50" height="20" fill="var(--bg-surface)" stroke="var(--line-bright)"/>
+                <text x="197" y="45" text-anchor="middle" fill="var(--text-secondary)" font-size="10" class="font-mono-tech">float</text>
+              </g>
+
+              <!-- Output 2: Floor Division (//) -->
+              <g transform="translate(285, 88)">
+                <rect width="235" height="64" fill="var(--bg-carbon)" stroke="var(--signal-orange)" stroke-width="1.8"/>
+                <text x="14" y="22" fill="var(--signal-orange)" font-size="10" class="font-mono-tech">OP_FLOOR_DIV: ${numA} // ${numB}</text>
+                <text x="14" y="47" fill="var(--signal-orange)" font-size="18" font-weight="600" class="font-mono-tech">${floorDiv}</text>
+                <rect x="172" y="31" width="50" height="20" fill="var(--signal-orange-dim)" stroke="var(--signal-orange)"/>
+                <text x="197" y="45" text-anchor="middle" fill="var(--signal-orange)" font-size="10" class="font-mono-tech">int</text>
+              </g>
+
+              <!-- Output 3: Modulus (%) -->
+              <g transform="translate(285, 166)">
+                <rect width="235" height="64" fill="var(--bg-carbon)" stroke="var(--phosphor-mint)" stroke-width="1.6"/>
+                <text x="14" y="22" fill="var(--phosphor-mint)" font-size="10" class="font-mono-tech">OP_MODULUS: ${numA} % ${numB}</text>
+                <text x="14" y="47" fill="var(--phosphor-mint)" font-size="17" font-weight="600" class="font-mono-tech">${modVal}</text>
+                <rect x="172" y="31" width="50" height="20" fill="var(--phosphor-mint-dim)" stroke="var(--phosphor-mint)"/>
+                <text x="197" y="45" text-anchor="middle" fill="var(--phosphor-mint)" font-size="10" class="font-mono-tech">int</text>
+              </g>
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <span class="text-[11px] font-mono-tech text-[var(--text-dim)] mr-1">LOAD_REGISTERS:</span>
+          <button onclick="setD1(7, 2)" class="hw-btn px-3 py-1 border ${numA === 7 ? 'border-[var(--signal-orange)] text-[var(--signal-orange)]' : 'border-[var(--line-bright)] text-[var(--text-secondary)]'} bg-[var(--bg-carbon)] text-xs font-mono-tech">(7, 2)</button>
+          <button onclick="setD1(-7, 2)" class="hw-btn px-3 py-1 border ${numA === -7 ? 'border-[var(--signal-orange)] text-[var(--signal-orange)]' : 'border-[var(--line-bright)] text-[var(--text-secondary)]'} bg-[var(--bg-carbon)] text-xs font-mono-tech">(-7, 2) // NEG_TRAP</button>
+          <button onclick="setD1(15, 4)" class="hw-btn px-3 py-1 border ${numA === 15 ? 'border-[var(--signal-orange)] text-[var(--signal-orange)]' : 'border-[var(--line-bright)] text-[var(--text-secondary)]'} bg-[var(--bg-carbon)] text-xs font-mono-tech">(15, 4)</button>
+        `;
+      }
+
+      else if (day === 2) {
+        // DAY 2: 3D Step Sequencer & Laser Jump Arcs for range(start, stop, step)
+        const { start, stop, step } = simState.d2;
+        const visited = [];
+        if (step > 0) {
+          for (let i = start; i < stop; i += step) visited.push(i);
+        } else if (step < 0) {
+          for (let i = start; i > stop; i += step) visited.push(i);
+        }
+
+        let arcsSVG = '';
+        for (let i = 0; i < visited.length - 1; i++) {
+          const x1 = 35 + visited[i] * 45;
+          const x2 = 35 + visited[i + 1] * 45;
+          const midX = (x1 + x2) / 2;
+          const pathId = `arc-${i}`;
+          arcsSVG += `
+            <path id="${pathId}" d="M ${x1} 135 Q ${midX} 42 ${x2} 135" stroke="var(--signal-orange)" stroke-width="2" fill="none" class="svg-laser-arc" />
+            <circle r="3" fill="var(--phosphor-mint)">
+              <animateMotion dur="1.2s" repeatCount="indefinite"><mpath href="#${pathId}"/></animateMotion>
+            </circle>
+          `;
+        }
+
+        let nodesSVG = '';
+        for (let n = 0; n <= 10; n++) {
+          const cx = 35 + n * 45;
+          const isHit = visited.includes(n);
+          const isStop = n === stop;
+          nodesSVG += `
+            <g transform="translate(${cx}, 135)">
+              <rect x="-15" y="-15" width="30" height="30" fill="${isHit ? 'var(--bg-elevated)' : 'var(--bg-carbon)'}" stroke="${isHit ? 'var(--signal-orange)' : (isStop ? 'var(--crimson-alert)' : 'var(--line-bright)')}" stroke-width="${isHit || isStop ? '2' : '1.2'}" />
+              <text y="4" text-anchor="middle" fill="${isHit ? 'var(--text-primary)' : 'var(--text-dim)'}" font-size="12" font-weight="${isHit ? '600' : '400'}" class="font-mono-tech">${n}</text>
+              ${isStop ? `<text y="30" text-anchor="middle" fill="var(--crimson-alert)" font-size="9" class="font-mono-tech">EXCL_STOP</text>` : ''}
+            </g>
+          `;
+        }
+
+        visualMount.innerHTML = `
+          <div class="w-full flex flex-col items-center gap-5 spatial-viewport">
+            <div class="z-plane-levitate font-mono-tech text-xs sm:text-sm bg-[var(--bg-carbon)] px-4 py-2.5 border border-[var(--line-bright)] flex items-center gap-3">
+              <span class="text-[var(--text-secondary)]">list(range(${start}, ${stop}, ${step}))</span>
+              <span class="text-[var(--signal-orange)]">&rarr;</span>
+              <span class="text-[var(--phosphor-mint)] font-semibold">[${visited.join(', ')}]</span>
+            </div>
+            <svg class="w-full h-48 overflow-visible z-plane-mid" viewBox="0 0 520 185" fill="none">
+              <line x1="15" y1="135" x2="505" y2="135" stroke="var(--line-hairline)" stroke-width="2" />
+              ${arcsSVG}
+              ${nodesSVG}
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <span class="text-[11px] font-mono-tech text-[var(--text-dim)]">VECTOR_PRESETS:</span>
+          <button onclick="setD2(1, 10, 2)" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">range(1, 10, 2)</button>
+          <button onclick="setD2(0, 10, 3)" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">range(0, 10, 3)</button>
+          <button onclick="setD2(9, 1, -2)" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">range(9, 1, -2) // REV</button>
+        `;
+      }
+
+      else if (day === 3) {
+        // DAY 3: Orbital Cyclotron Loop Reactor (Step, Continue Chord, Break Ejection)
+        const { iter, status, skipped, brokenAt } = simState.d3;
+        const angles = [-90, -30, 30, 90, 150, 210];
+        const radius = 82;
+
+        let orbitNodes = '';
+        for (let i = 0; i < 6; i++) {
+          const rad = (angles[i] * Math.PI) / 180;
+          const x = 260 + Math.cos(rad) * radius;
+          const y = 115 + Math.sin(rad) * radius;
+          const isCurrent = (i === iter && status === "ORBITING");
+          const isSkipped = skipped.includes(i);
+          const isBroken = brokenAt === i;
+
+          let strokeCol = "var(--line-bright)";
+          if (isCurrent) strokeCol = "var(--signal-orange)";
+          else if (isSkipped) strokeCol = "var(--laser-amber)";
+          else if (isBroken) strokeCol = "var(--crimson-alert)";
+          else if (i < iter && !isSkipped) strokeCol = "var(--phosphor-mint)";
+
+          orbitNodes += `
+            <g transform="translate(${x}, ${y})">
+              <rect x="-20" y="-15" width="40" height="30" fill="var(--bg-carbon)" stroke="${strokeCol}" stroke-width="${isCurrent ? '2.2' : '1.5'}" />
+              <text y="4" text-anchor="middle" fill="var(--text-primary)" font-size="11" class="font-mono-tech">i=${i}</text>
+            </g>
+          `;
+        }
+
+        // Tangential Break Ejection Vector if broken
+        let breakVector = '';
+        if (brokenAt !== null) {
+          const rad = (angles[brokenAt] * Math.PI) / 180;
+          const bx = 260 + Math.cos(rad) * radius;
+          const by = 115 + Math.sin(rad) * radius;
+          breakVector = `
+            <path d="M ${bx} ${by} L 470 35" stroke="var(--crimson-alert)" stroke-width="2" class="svg-signal-dash" />
+            <rect x="425" y="15" width="85" height="26" fill="var(--bg-carbon)" stroke="var(--crimson-alert)" />
+            <text x="467" y="32" text-anchor="middle" fill="var(--crimson-alert)" font-size="10" class="font-mono-tech">LOOP_ABORT</text>
+          `;
+        }
+
+        visualMount.innerHTML = `
+          <div class="w-full flex flex-col items-center spatial-viewport">
+            <svg class="w-full h-60 overflow-visible z-plane-high" viewBox="0 0 520 230" fill="none">
+              <circle cx="260" cy="115" r="${radius}" stroke="var(--line-bright)" stroke-width="1.8" class="${status === 'ORBITING' ? 'svg-signal-dash' : ''}" />
+              ${breakVector}
+              ${orbitNodes}
+              <rect x="205" y="92" width="110" height="46" fill="var(--bg-panel)" stroke="var(--line-bright)" />
+              <text x="260" y="110" text-anchor="middle" fill="var(--text-dim)" font-size="9" class="font-mono-tech">${status}</text>
+              <text x="260" y="128" text-anchor="middle" fill="var(--signal-orange)" font-size="13" font-weight="600" class="font-mono-tech">PTR // i=${iter}</text>
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="stepD3('next')" class="hw-btn px-3 py-1 border border-[var(--phosphor-mint)] bg-[var(--phosphor-mint-dim)] text-xs font-mono-tech text-[var(--phosphor-mint)]">STEP_NEXT →</button>
+          <button onclick="stepD3('continue')" class="hw-btn px-3 py-1 border border-[var(--laser-amber)] bg-[var(--bg-carbon)] text-xs font-mono-tech text-[var(--laser-amber)]">EXEC_CONTINUE</button>
+          <button onclick="stepD3('break')" class="hw-btn px-3 py-1 border border-[var(--crimson-alert)] bg-[var(--bg-carbon)] text-xs font-mono-tech text-[var(--crimson-alert)]">EXEC_BREAK</button>
+          <button onclick="stepD3('reset')" class="hw-btn px-2.5 py-1 border border-[var(--line-hairline)] bg-[var(--bg-carbon)] text-xs font-mono-tech text-[var(--text-dim)]">RESET</button>
+        `;
+      }
+
+      else if (day === 4) {
+        // DAY 4: 3D Levitating Character Ribbon for "PYTHON_12"
+        const chars = ["P", "Y", "T", "H", "O", "N", "_", "1", "2"];
+        const { label, indices } = simState.d4;
+        const resultStr = indices.map(i => chars[i]).join('');
+
+        const blocksHTML = chars.map((ch, idx) => {
+          const isSelected = indices.includes(idx);
+          const negIdx = idx - 9;
+          return `
+            <div class="flex flex-col items-center gap-1.5 ${isSelected ? 'z-plane-levitate' : 'z-plane-base'}">
+              <span class="text-[10px] font-mono-tech ${isSelected ? 'text-[var(--signal-orange)] font-semibold' : 'text-[var(--text-dim)]'}">+${idx}</span>
+              <div class="w-9 h-12 sm:w-11 sm:h-14 border flex items-center justify-center font-mono-tech text-sm sm:text-base font-semibold transition-all ${
+                isSelected
+                  ? 'bg-[var(--bg-elevated)] border-[var(--signal-orange)] text-[var(--text-primary)]'
+                  : 'bg-[var(--bg-carbon)] border-[var(--line-hairline)] text-[var(--text-dim)]'
+              }">
+                ${ch}
+              </div>
+              <span class="text-[10px] font-mono-tech ${isSelected ? 'text-[var(--phosphor-mint)]' : 'text-[var(--text-dim)]'}">${negIdx}</span>
+            </div>
+          `;
+        }).join('');
+
+        visualMount.innerHTML = `
+          <div class="w-full flex flex-col items-center gap-6 spatial-viewport">
+            <div class="z-plane-mid font-mono-tech text-xs sm:text-sm bg-[var(--bg-carbon)] px-4 py-2.5 border border-[var(--line-bright)] flex items-center gap-3">
+              <span class="text-[var(--text-secondary)]">s = "PYTHON_12"</span>
+              <span class="text-[var(--text-dim)]">|</span>
+              <span class="text-[var(--signal-orange)]">s${label}</span>
+              <span>&rarr;</span>
+              <span class="text-[var(--phosphor-mint)] font-semibold">"${resultStr}"</span>
+            </div>
+            <div class="flex items-center justify-center gap-1.5 sm:gap-2 spatial-viewport py-3">
+              ${blocksHTML}
+            </div>
+            <div class="text-[11px] font-mono-tech text-[var(--text-dim)] uppercase tracking-wider">
+              TOP_RAIL: POSITIVE INDEX (0..8) &nbsp;//&nbsp; BOTTOM_RAIL: NEGATIVE INDEX (-9..-1)
+            </div>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD4('[0:6]', [0,1,2,3,4,5])" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">s[0:6]</button>
+          <button onclick="setD4('[1:7:2]', [1,3,5])" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">s[1:7:2]</button>
+          <button onclick="setD4('[-2:]', [7,8])" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">s[-2:]</button>
+          <button onclick="setD4('[::-1]', [8,7,6,5,4,3,2,1,0])" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">s[::-1] // REV</button>
+        `;
+      }
+
+      else if (day === 5) {
+        // DAY 5: 3D Heap Pointer Topology (List Alias vs .copy())
+        const { mode, mutated } = simState.d5;
+        const listA = mutated && mode === 'alias' ? '[10, 20, 99]' : '[10, 20, 30]';
+        const listB = mutated ? '[10, 20, 99]' : '[10, 20, 30]';
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-xl flex flex-col items-center spatial-viewport">
+            <svg class="w-full h-56 overflow-visible z-plane-high" viewBox="0 0 520 210" fill="none">
+              <!-- Stack Reference Pointers -->
+              <g transform="translate(15, 32)">
+                <rect width="115" height="46" fill="var(--bg-carbon)" stroke="var(--line-bright)" stroke-width="1.6"/>
+                <text x="57" y="18" text-anchor="middle" fill="var(--text-dim)" font-size="9" class="font-mono-tech">STACK_REF_A</text>
+                <text x="57" y="35" text-anchor="middle" fill="var(--text-primary)" font-size="13" class="font-mono-tech">var a</text>
+              </g>
+              <g transform="translate(15, 130)">
+                <rect width="115" height="46" fill="var(--bg-carbon)" stroke="var(--signal-orange)" stroke-width="1.6"/>
+                <text x="57" y="18" text-anchor="middle" fill="var(--signal-orange)" font-size="9" class="font-mono-tech">STACK_REF_B</text>
+                <text x="57" y="35" text-anchor="middle" fill="var(--signal-orange)" font-size="13" class="font-mono-tech">var b</text>
+              </g>
+
+              ${mode === 'alias' ? `
+                <!-- Both pointers converge on the exact same Heap Object -->
+                <path id="ptr-a" d="M 130 55 C 200 55, 215 95, 285 95" stroke="var(--text-primary)" stroke-width="2" class="svg-signal-dash"/>
+                <path id="ptr-b" d="M 130 153 C 200 153, 215 115, 285 115" stroke="var(--signal-orange)" stroke-width="2.2" class="svg-signal-dash"/>
+                <circle r="3.5" fill="var(--signal-orange)">
+                  <animateMotion dur="1.4s" repeatCount="indefinite"><mpath href="#ptr-b"/></animateMotion>
+                </circle>
+                <g transform="translate(285, 64)">
+                  <rect width="215" height="80" fill="var(--bg-carbon)" stroke="var(--signal-orange)" stroke-width="2"/>
+                  <text x="107" y="24" text-anchor="middle" fill="var(--signal-orange)" font-size="10" class="font-mono-tech">SHARED HEAP // 0x7F4092</text>
+                  <text x="107" y="55" text-anchor="middle" fill="var(--text-primary)" font-size="16" font-weight="600" class="font-mono-tech">${listB}</text>
+                </g>
+              ` : `
+                <!-- Cloned separate Heap Objects -->
+                <path d="M 130 55 L 285 55" stroke="var(--text-primary)" stroke-width="2" class="svg-signal-dash"/>
+                <path d="M 130 153 L 285 153" stroke="var(--phosphor-mint)" stroke-width="2" class="svg-signal-dash"/>
+                <g transform="translate(285, 24)">
+                  <rect width="215" height="62" fill="var(--bg-carbon)" stroke="var(--line-bright)" stroke-width="1.6"/>
+                  <text x="107" y="22" text-anchor="middle" fill="var(--text-dim)" font-size="10" class="font-mono-tech">HEAP_OBJ_1 // 0x7F4092</text>
+                  <text x="107" y="46" text-anchor="middle" fill="var(--text-primary)" font-size="15" class="font-mono-tech">${listA}</text>
+                </g>
+                <g transform="translate(285, 122)">
+                  <rect width="215" height="62" fill="var(--bg-carbon)" stroke="var(--phosphor-mint)" stroke-width="1.8"/>
+                  <text x="107" y="22" text-anchor="middle" fill="var(--phosphor-mint)" font-size="10" class="font-mono-tech">HEAP_CLONE // 0x7F8104</text>
+                  <text x="107" y="46" text-anchor="middle" fill="var(--phosphor-mint)" font-size="15" class="font-mono-tech">${listB}</text>
+                </g>
+              `}
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD5('alias', false)" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">1. ALIAS: b = a</button>
+          <button onclick="setD5('copy', false)" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">2. CLONE: b = a.copy()</button>
+          <button onclick="setD5('${mode}', true)" class="hw-btn px-3 py-1 border border-[var(--signal-orange)] bg-[var(--signal-orange-dim)] text-xs font-mono-tech text-[var(--signal-orange)]">MUTATE: b[2] = 99</button>
+        `;
+      }
+
+      else if (day === 6) {
+        // DAY 6: Hash Bucket Router
+        const { word, counts } = simState.d6;
+        const entries = Object.entries(counts);
+
+        const nodes = entries.map(([k, v], i) => {
+          const y = 26 + i * 44;
+          const pathId = `hash-bus-${i}`;
+          return `
+            <g transform="translate(35, ${y})">
+              <rect width="90" height="34" fill="var(--bg-carbon)" stroke="var(--line-bright)" stroke-width="1.6"/>
+              <text x="45" y="22" text-anchor="middle" fill="var(--text-primary)" font-size="13" class="font-mono-tech">KEY '${k}'</text>
+              <path id="${pathId}" d="M 90 17 L 250 17" stroke="var(--phosphor-mint)" stroke-width="1.8" class="svg-signal-dash"/>
+              <circle r="3" fill="var(--phosphor-mint)">
+                <animateMotion dur="1.4s" repeatCount="indefinite"><mpath href="#${pathId}"/></animateMotion>
+              </circle>
+              <rect x="250" width="155" height="34" fill="var(--bg-carbon)" stroke="var(--phosphor-mint)" stroke-width="1.6"/>
+              <text x="327" y="22" text-anchor="middle" fill="var(--phosphor-mint)" font-size="13" font-weight="600" class="font-mono-tech">VAL // ${v}</text>
+            </g>
+          `;
+        }).join('');
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-xl flex flex-col items-center gap-3 spatial-viewport">
+            <div class="z-plane-mid font-mono-tech text-xs text-[var(--text-secondary)] bg-[var(--bg-carbon)] px-3.5 py-2 border border-[var(--line-bright)]">
+              freq[ch] = freq.get(ch, 0) + 1 &nbsp;// INPUT: <span class="text-[var(--signal-orange)] font-semibold">"${word}"</span>
+            </div>
+            <svg class="w-full h-56 overflow-visible z-plane-high" viewBox="0 0 480 205" fill="none">
+              ${nodes}
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD6('PUJA', {P:1, U:1, J:1, A:1})" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">"PUJA"</button>
+          <button onclick="setD6('MADAM', {M:2, A:2, D:1})" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">"MADAM"</button>
+          <button onclick="setD6('SUCCESS', {S:3, U:1, C:2, E:1})" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">"SUCCESS"</button>
+        `;
+      }
+
+      else if (day === 7) {
+        // DAY 7: True 3D Exploded Stack Frames (Global vs Local Scope)
+        const { mode } = simState.d7;
+        const globalVal = mode === 'global' ? 100 : 50;
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-md flex flex-col items-center gap-4 spatial-viewport py-2">
+            <!-- Elevated Local Stack Frame -->
+            <div class="z-plane-levitate w-full p-4 bg-[var(--bg-elevated)] border border-[var(--signal-orange)] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-mono-tech uppercase text-[var(--signal-orange)]">LOCAL_STACK_FRAME // Z:+68px</div>
+                <div class="text-xs sm:text-sm font-mono-tech text-[var(--text-primary)] mt-1">
+                  def update(): ${mode === 'global' ? 'global x; x = 100' : 'x = 100; return x'}
+                </div>
+              </div>
+              <span class="px-2.5 py-1 bg-[var(--bg-carbon)] border border-[var(--signal-orange)] font-mono-tech text-xs text-[var(--signal-orange)]">x = 100</span>
+            </div>
+
+            <!-- Vertical SVG Scope Bridge -->
+            <svg class="w-full h-14 z-plane-mid" viewBox="0 0 320 50" fill="none">
+              <line x1="160" y1="2" x2="160" y2="48" stroke="${mode === 'global' ? 'var(--signal-orange)' : 'var(--phosphor-mint)'}" stroke-width="2" class="svg-signal-dash"/>
+              <text x="172" y="28" fill="var(--text-secondary)" font-size="10" class="font-mono-tech">
+                ${mode === 'global' ? 'GLOBAL_BIND: MUTATES BASE X' : 'ISOLATED: GLOBAL X UNCHANGED'}
+              </text>
+            </svg>
+
+            <!-- Base Global Module Frame -->
+            <div class="z-plane-base w-full p-4 bg-[var(--bg-carbon)] border border-[var(--line-bright)] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-mono-tech uppercase text-[var(--text-dim)]">GLOBAL_MODULE_FRAME // Z:0px</div>
+                <div class="text-xs sm:text-sm font-mono-tech text-[var(--text-primary)] mt-1">print("Global x:", x)</div>
+              </div>
+              <span class="px-2.5 py-1 bg-[var(--bg-surface)] border border-[var(--phosphor-mint)] font-mono-tech text-xs text-[var(--phosphor-mint)] font-semibold">x = ${globalVal}</span>
+            </div>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD7('shadow')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">LOCAL_SHADOW (DEFAULT)</button>
+          <button onclick="setD7('global')" class="hw-btn px-3 py-1 border border-[var(--signal-orange)] bg-[var(--signal-orange-dim)] text-xs font-mono-tech text-[var(--signal-orange)]">WITH 'global x' KEYWORD</button>
+        `;
+      }
+
+      else if (day === 8) {
+        // DAY 8: Optical Buffer Scanner (.read, .readline, .readlines)
+        const { method } = simState.d8;
+        const lines = ["Ananya - 94", "Thejas - 88", "Aarav - 91"];
+        let returnOut = '';
+        if (method === 'read') returnOut = `"Ananya - 94\\nThejas - 88\\nAarav - 91"  // TYPE: str`;
+        if (method === 'readline') returnOut = `"Ananya - 94\\n"  // TYPE: str (1 line)`;
+        if (method === 'readlines') returnOut = `["Ananya - 94\\n", "Thejas - 88\\n", "Aarav - 91"]  // TYPE: list`;
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-md flex flex-col gap-4 spatial-viewport">
+            <div class="z-plane-mid relative p-4 bg-[var(--bg-carbon)] border border-[var(--line-bright)] flex flex-col gap-2 overflow-hidden">
+              <!-- Animated Optical Laser Scanline -->
+              <div class="optical-scanline absolute left-0 right-0 top-6 h-0.5 bg-[var(--signal-orange)] pointer-events-none"></div>
+              <div class="text-[10px] font-mono-tech text-[var(--text-dim)] flex justify-between border-b border-[var(--line-hairline)] pb-1.5">
+                <span>BUFFER // MARKS.TXT</span>
+                <span>PTR_MODE: 'r'</span>
+              </div>
+              ${lines.map((l, idx) => {
+                const active = (method === 'read' || method === 'readlines' || (method === 'readline' && idx === 0));
+                return `
+                  <div class="px-3 py-1.5 font-mono-tech text-xs flex items-center justify-between border ${
+                    active ? 'border-[var(--signal-orange)] bg-[var(--signal-orange-dim)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-dim)]'
+                  }">
+                    <span>${l}</span>
+                    <span class="text-[10px] text-[var(--signal-orange)]">\\n</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="z-plane-levitate p-3.5 bg-[var(--bg-carbon)] border border-[var(--phosphor-mint)] font-mono-tech text-xs">
+              <div class="text-[10px] text-[var(--text-dim)] mb-1">OUTPUT_REGISTER // f.${method}():</div>
+              <div class="text-[var(--phosphor-mint)] break-all">${returnOut}</div>
+            </div>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD8('read')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">f.read()</button>
+          <button onclick="setD8('readline')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">f.readline()</button>
+          <button onclick="setD8('readlines')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">f.readlines()</button>
+        `;
+      }
+
+      else if (day === 9) {
+        // DAY 9: Byte Serialization Chamber (pickle.dump & EOFError Shield)
+        const { phase } = simState.d9;
+
+        visualMount.innerHTML = `
+          <div class="w-full max-w-xl flex flex-col items-center spatial-viewport">
+            <svg class="w-full h-56 overflow-visible z-plane-high" viewBox="0 0 520 200" fill="none">
+              <defs>
+                <path id="pkl-1" d="M 160 100 L 210 100" />
+                <path id="pkl-2" d="M 355 100 L 400 100" />
+              </defs>
+
+              <!-- Node 1: In-Memory Python List -->
+              <g transform="translate(10, 62)">
+                <rect width="150" height="76" fill="var(--bg-carbon)" stroke="${phase === 'object' ? 'var(--signal-orange)' : 'var(--line-bright)'}" stroke-width="1.8"/>
+                <text x="75" y="25" text-anchor="middle" fill="var(--text-dim)" font-size="9" class="font-mono-tech">STRUCT // LIST_OBJ</text>
+                <text x="75" y="50" text-anchor="middle" fill="var(--text-primary)" font-size="12" font-weight="600" class="font-mono-tech">[101, "Riya", 95]</text>
+              </g>
+
+              <use href="#pkl-1" stroke="var(--signal-orange)" stroke-width="2" class="svg-signal-dash"/>
+              <circle r="3.5" fill="var(--signal-orange)">
+                <animateMotion dur="1.1s" repeatCount="indefinite"><mpath href="#pkl-1"/></animateMotion>
+              </circle>
+
+              <!-- Node 2: Binary .DAT Stream -->
+              <g transform="translate(210, 62)">
+                <rect width="145" height="76" fill="var(--bg-carbon)" stroke="${phase === 'dump' ? 'var(--signal-orange)' : 'var(--line-bright)'}" stroke-width="1.8"/>
+                <text x="72" y="25" text-anchor="middle" fill="var(--signal-orange)" font-size="9" class="font-mono-tech">STUDENTS.DAT (wb/rb)</text>
+                <text x="72" y="50" text-anchor="middle" fill="var(--signal-orange)" font-size="12" class="font-mono-tech">\\x80\\x04\\x95\\x11...</text>
+              </g>
+
+              <use href="#pkl-2" stroke="var(--phosphor-mint)" stroke-width="2" class="svg-signal-dash"/>
+              <circle r="3.5" fill="var(--phosphor-mint)">
+                <animateMotion dur="1.1s" repeatCount="indefinite"><mpath href="#pkl-2"/></animateMotion>
+              </circle>
+
+              <!-- Node 3: EOFError Interceptor -->
+              <g transform="translate(400, 62)">
+                <rect width="110" height="76" fill="var(--bg-carbon)" stroke="${phase === 'eof' ? 'var(--phosphor-mint)' : 'var(--line-bright)'}" stroke-width="1.8"/>
+                <text x="55" y="25" text-anchor="middle" fill="var(--text-dim)" font-size="9" class="font-mono-tech">${phase === 'eof' ? 'EXCEPT_GUARD' : 'PICKLE.LOAD()'}</text>
+                <text x="55" y="50" text-anchor="middle" fill="var(--phosphor-mint)" font-size="11" font-weight="600" class="font-mono-tech">${phase === 'eof' ? 'EOF_CAUGHT' : 'STREAM_OK'}</text>
+              </g>
+            </svg>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="setD9('object')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">1. PY_RECORD</button>
+          <button onclick="setD9('dump')" class="hw-btn px-3 py-1 border border-[var(--line-bright)] bg-[var(--bg-carbon)] text-xs font-mono-tech">2. pickle.dump()</button>
+          <button onclick="setD9('eof')" class="hw-btn px-3 py-1 border border-[var(--phosphor-mint)] bg-[var(--phosphor-mint-dim)] text-xs font-mono-tech text-[var(--phosphor-mint)]">3. except EOFError</button>
+        `;
+      }
+
+      else if (day === 10) {
+        // DAY 10: 3D Isometric LIFO Stack Tower
+        const { stack, underflow } = simState.d10;
+
+        const stackBlocks = stack.slice().reverse().map((item, revIdx) => {
+          const actualIdx = stack.length - 1 - revIdx;
+          const isTop = actualIdx === stack.length - 1;
+          return `
+            <div class="w-64 px-4 py-2.5 border font-mono-tech text-xs flex items-center justify-between transition-all ${
+              isTop
+                ? 'z-plane-levitate bg-[var(--bg-elevated)] border-[var(--signal-orange)] text-[var(--text-primary)]'
+                : 'z-plane-base bg-[var(--bg-carbon)] border-[var(--line-bright)] text-[var(--text-secondary)]'
+            }">
+              <span>[${actualIdx}] ${item}</span>
+              ${isTop ? `<span class="text-[10px] text-[var(--signal-orange)] font-semibold">&larr; TOP_PTR</span>` : ''}
+            </div>
+          `;
+        }).join('');
+
+        visualMount.innerHTML = `
+          <div class="w-full flex flex-col items-center justify-center gap-2.5 min-h-[230px] spatial-viewport">
+            ${stack.length === 0 ? `
+              <div class="z-plane-levitate p-5 bg-[var(--bg-carbon)] border border-[var(--crimson-alert)] text-xs font-mono-tech text-[var(--crimson-alert)]">
+                ${underflow ? '[ALERT] STACK UNDERFLOW // len(stk) == 0' : 'STACK_EMPTY // [ ]'}
+              </div>
+            ` : `
+              <div class="flex flex-col items-center gap-2 spatial-viewport">
+                ${stackBlocks}
+              </div>
+            `}
+            <div class="w-72 h-1.5 bg-[var(--line-bright)] mt-2"></div>
+            <span class="text-[10px] font-mono-tech text-[var(--text-dim)] uppercase tracking-widest">LIFO_BASE_REGISTER // COUNT: ${stack.length}</span>
+          </div>
+        `;
+
+        controlsMount.innerHTML = `
+          <button onclick="stackPush()" class="hw-btn px-3.5 py-1 border border-[var(--phosphor-mint)] bg-[var(--phosphor-mint-dim)] text-xs font-mono-tech text-[var(--phosphor-mint)]">+ PUSH: stk.append()</button>
+          <button onclick="stackPop()" class="hw-btn px-3.5 py-1 border border-[var(--signal-orange)] bg-[var(--signal-orange-dim)] text-xs font-mono-tech text-[var(--signal-orange)]">- POP: stk.pop()</button>
+        `;
+      }
+    }
+
+    // ============================================================================
+    // STAGE INTERACTION CONTROLLERS
+    // ============================================================================
+    function setD1(a, b) {
+      playTick(960, 0.015);
+      simState.d1 = { numA: a, numB: b };
+      render3DStageForDay(1);
+    }
+
+    function setD2(start, stop, step) {
+      playTick(960, 0.015);
+      simState.d2 = { start, stop, step };
+      render3DStageForDay(2);
+    }
+
+    function stepD3(action) {
+      playTick(1020, 0.02);
+      const s = simState.d3;
+      if (action === 'reset') {
+        simState.d3 = { iter: 0, status: "ORBITING", skipped: [], brokenAt: null };
+      } else if (action === 'next' && s.status === "ORBITING") {
+        s.iter = (s.iter + 1) % 6;
+      } else if (action === 'continue' && s.status === "ORBITING") {
+        if (!s.skipped.includes(s.iter)) s.skipped.push(s.iter);
+        s.iter = (s.iter + 1) % 6;
+      } else if (action === 'break' && s.status === "ORBITING") {
+        s.brokenAt = s.iter;
+        s.status = "ABORTED_BREAK";
+      }
+      render3DStageForDay(3);
+    }
+
+    function setD4(label, indices) {
+      playTick(960, 0.015);
+      simState.d4 = { label, indices };
+      render3DStageForDay(4);
+    }
+
+    function setD5(mode, mutated) {
+      playTick(980, 0.02);
+      simState.d5 = { mode, mutated };
+      render3DStageForDay(5);
+    }
+
+    function setD6(word, counts) {
+      playTick(960, 0.015);
+      simState.d6 = { word, counts };
+      render3DStageForDay(6);
+    }
+
+    function setD7(mode) {
+      playTick(960, 0.015);
+      simState.d7 = { mode };
+      render3DStageForDay(7);
+    }
+
+    function setD8(method) {
+      playTick(960, 0.015);
+      simState.d8 = { method };
+      render3DStageForDay(8);
+    }
+
+    function setD9(phase) {
+      playTick(960, 0.015);
+      simState.d9 = { phase };
+      render3DStageForDay(9);
+    }
+
+    function stackPush() {
+      playTick(1150, 0.02);
+      const s = simState.d10;
+      s.underflow = false;
+      if (s.stack.length < 5) {
+        const nextHex = `0x0${s.stack.length + 1}`;
+        const labels = ["NCERT_CS", "PY_CORE", "SQL_LAB", "NET_TCP", "PICKLE_IO"];
+        s.stack.push(`${nextHex}: ${labels[s.stack.length]}`);
+      }
+      render3DStageForDay(10);
+    }
+
+    function stackPop() {
+      playTick(680, 0.025);
+      const s = simState.d10;
+      if (s.stack.length === 0) {
+        s.underflow = true;
+      } else {
+        s.stack.pop();
+        s.underflow = false;
+      }
+      render3DStageForDay(10);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
